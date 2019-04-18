@@ -1,0 +1,36 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 26
+    buildToolsVersion "28.0.0"
+    defaultConfig {
+        applicationId "zengweicong.com.performacetest"
+        minSdkVersion 23
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.2"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:26.+'
+    compile  'cn.trinea.android.common:trinea-android-common:4.2.15'
+    testCompile 'junit:junit:4.12'
+    compile files('libs/activation.jar')
+    compile files('libs/additionnal.jar')
+    compile files('libs/mail.jar')
+    compile files('libs/commons-io-2.5.jar')
+    compile files('libs/android-support-v4.jar')
+    compile 'com.github.tyhjh:PermissionUtil:v1.0.5'
+}
