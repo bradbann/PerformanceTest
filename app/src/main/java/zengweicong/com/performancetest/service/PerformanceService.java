@@ -77,6 +77,8 @@ import zengweicong.com.performancetest.utils.Programe;
 import zengweicong.com.performancetest.utils.Settings;
 
 import static android.R.attr.process;
+import static android.content.ContentValues.TAG;
+import static zengweicong.com.performancetest.R.id.monkey;
 
 /**
  * Service running in background
@@ -222,7 +224,7 @@ public class PerformanceService extends Service {
 					.findViewById(R.id.memtotal);
 			txtTraffic = (TextView) viFloatingWindow.findViewById(R.id.traffic);
 			btnWifi = (Button) viFloatingWindow.findViewById(R.id.wifi);
-			btnMonkey=(Button) viFloatingWindow.findViewById(R.id.monkey);
+			btnMonkey=(Button) viFloatingWindow.findViewById(monkey);
 			btnMonkey.setText(R.string.open_monkey);
 			wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 			if (wifiManager.isWifiEnabled()) {
@@ -392,12 +394,10 @@ public class PerformanceService extends Service {
 		btnMonkey.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Toast.makeText(PerformanceService.this,
-						"monkey测试已开始，大约需要1h，期间其它操作不可用，执行完后自动停止测试并保存报告",
-						Toast.LENGTH_LONG).show();
 				btnMonkey.setText(R.string.run_monkey);
 				btnMonkey.setEnabled(false);
 				btnStop.setEnabled(false);
+				btnStop.setText("不可点");
 				Intent intent = new Intent();
 				intent.putExtra("isMonkeyStart", true);
 				intent.setAction(SERVICE_ACTION);
@@ -406,19 +406,21 @@ public class PerformanceService extends Service {
 				Thread thread=new Thread(new Runnable() {
 					@Override
 					public void run() {
-						String cmd="monkey -p "+packageName+" --throttle 1000 -v -v -v -s 1 --ignore-security-exceptions --kill-process-after-error --monitor-native-crashes 15000 > /sdcard/monkey.txt";
+						String cmd="monkey -p "+packageName+" --throttle 1000 -v -v -v -s 1 --ignore-crashes --ignore-timeouts --ignore-security-exceptions  15000 > /sdcard/monkey.txt";
 						ShellUtils.CommandResult debug = null;
 						if (isRoot())
 						{
+							mHandler.sendEmptyMessage(4);
 							debug = ShellUtils.execCommand(cmd, true);
+							mHandler.sendEmptyMessage(2);
 						}
 						else
 						{
 //							ShellUtils.execCommand("sh",false);
-							debug = ShellUtils.execCommand(cmd, false);
+//							debug = ShellUtils.execCommand(cmd, false);
 							mHandler.sendEmptyMessage(3);
 						}
-						mHandler.sendEmptyMessage(2);
+
 					}
 				});
 				thread.start();
@@ -469,10 +471,20 @@ public class PerformanceService extends Service {
 			}
 		}
 	};
+	public boolean isRoot(){
+		boolean bool = false;
 
-	private static boolean isRoot() {
-		String buildTags = android.os.Build.TAGS;
-		return buildTags != null && buildTags.contains("test-keys");
+		try{
+			if ((!new File("/system/bin/su").exists()) && (!new File("/system/xbin/su").exists())){
+				bool = false;
+			} else {
+				bool = true;
+			}
+			Log.d(TAG, "bool = " + bool);
+		} catch (Exception e) {
+
+		}
+		return bool;
 	}
 	/**
 	 * Try to get start time from logcat.
@@ -657,20 +669,28 @@ public class PerformanceService extends Service {
 					break;
 				case 2:
 					btnStop.setEnabled(true);
+					btnStop.setText(R.string.stop_test);
 					btnMonkey.setEnabled(true);
 					btnMonkey.setText(R.string.open_monkey);
 					//如果执行monkey正常，执行完monkey后自动停止测试
-					if (isRoot()){
-						Intent intent = new Intent();
-						intent.putExtra("isServiceStop", true);
-						intent.setAction(SERVICE_ACTION);
-						sendBroadcast(intent);
-						stopSelf();
-					}
+					Intent intent = new Intent();
+					intent.putExtra("isServiceStop", true);
+					intent.setAction(SERVICE_ACTION);
+					sendBroadcast(intent);
+					stopSelf();
 					break;
 				case 3:
+					btnStop.setEnabled(true);
+					btnStop.setText(R.string.stop_test);
+					btnMonkey.setEnabled(true);
+					btnMonkey.setText(R.string.open_monkey);
 					Toast.makeText(PerformanceService.this,
 							"手机未root，无法正常执行monkey,请root后使用或者手动操作应用" ,
+							Toast.LENGTH_LONG).show();
+					break;
+				case 4:
+					Toast.makeText(PerformanceService.this,
+							"monkey测试已开始，期间其它操作不可用，执行完后自动停止测试并保存报告",
 							Toast.LENGTH_LONG).show();
 					break;
 				default:

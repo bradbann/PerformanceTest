@@ -7,7 +7,7 @@ android {
         applicationId "zengweicong.com.performacetest"
         minSdkVersion 23
         targetSdkVersion 26
-        versionCode 1
+        versionCode 12
         versionName "1.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
